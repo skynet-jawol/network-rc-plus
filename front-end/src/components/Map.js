@@ -1,10 +1,28 @@
-import React, { useEffect, useState } from "react";
-import { Amap, Marker, config, Polyline } from "@amap/amap-react";
+import React, { useEffect, useState, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
+import L from "leaflet";
 import store from "store";
 import { Switch, Space, Button, Slider } from "antd";
 import styles from "./Map.module.scss";
+import "leaflet/dist/leaflet.css";
 
-config.key = "8faf092bfa96e5b6748ea7e0a2d6ac9c";
+const MapController = ({ center, zoom, setZoom }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+  return null;
+};
+
+// 自定义标记图标
+const customIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+  shadowSize: [41, 41]
+});
 
 export default function Map({ editabled = false, statusInfo: { gps } = {} }) {
   const [history, setHistory] = useState(store.get("gps history") || []);
@@ -61,16 +79,27 @@ export default function Map({ editabled = false, statusInfo: { gps } = {} }) {
             value={zoom}
             onChange={(v) => setZoom(v)}
           />
-          <Amap zoom={zoom} center={center}>
-            <Marker
-              position={center}
-              label={{
-                direction: "bottom",
-              }}
-              draggable
+          <MapContainer
+            className={styles.map}
+            center={[lat, lng]}
+            zoom={zoom}
+            zoomControl={false}
+          >
+            <MapController center={[lat, lng]} zoom={zoom} setZoom={setZoom} />
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             />
-            <Polyline path={history} />
-          </Amap>
+            <Marker position={[lat, lng]} icon={customIcon} />
+            {history.length > 1 && (
+              <Polyline
+                positions={history.map(([lng, lat]) => [lat, lng])}
+                color="blue"
+                weight={3}
+                opacity={0.5}
+              />
+            )}
+          </MapContainer>
         </>
       )}
     </div>

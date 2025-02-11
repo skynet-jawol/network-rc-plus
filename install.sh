@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 VERSION_CODENAME=$(lsb_release -cs);
 if [ "$VERSION_CODENAME" != "buster" ]; then
     echo "只支持 buster 系统"
@@ -20,20 +18,20 @@ else
   DOWNLOAD_LINK="https://download.esonwong.com/network-rc/network-rc-${NETWORK_RC_VERSION}.tar.gz"
 fi
 
-read -p "使用内置 frp 服务器(yes/no, 默认 yes):" defaultFrp
-defaultFrp=${defaultFrp:-yes}
+read -p "Cloudflare Token:" cfToken
+if [ -z "$cfToken" ]; then
+  echo "Cloudflare Token 不能为空"
+  exit 1
+fi
 
-echo defaultFrp: $defaultFrp
+read -p "是否启用 GPS 功能(yes/no, 默认 no):" enableGPS
+enableGPS=${enableGPS:-no}
 
-if [ "$defaultFrp" = "yes" ] || [ "$defaultFrp" = "y"  ]; then
-  defaultFrp=true
-  defaultSubDomain=$(cat /proc/sys/kernel/random/uuid | cut -c 1-4)
-  read -p "域名前缀(默认 $defaultSubDomain):" subDomain
-  subDomain=${subDomain:-$defaultSubDomain}
-else
-  defaultFrpcConfig="/home/pi/frpc.ini"
-  read -p "frpc 配置文件地址(默认 $defaultFrpcConfig):" frpcConfig
-  frpcConfig=${frpcConfig:-$defaultFrpcConfig}
+if [ "$enableGPS" = "yes" ] || [ "$enableGPS" = "y"  ]; then
+  read -p "GPS 设备端口(默认 /dev/ttyUSB0):" gpsPort
+  gpsPort=${gpsPort:-/dev/ttyUSB0}
+  read -p "GPS 波特率(默认 9600):" gpsBaudRate
+  gpsBaudRate=${gpsBaudRate:-9600}
 fi
 
 read -p "Network RC 密码(默认 networkrc):" password
@@ -47,23 +45,14 @@ echo ""
 echo ""
 echo "你的设置如下"
 echo "----------------------------------------"
-if [ $defaultFrp = true ]; then
-  echo "域名前缀: $subDomain"
-  echo "Network RC 控制界面访问地址: https://${subDomain}.nrc.esonwong.com:9000";
-else
-  echo "使用自定义 frp 服务器"
-  echo "frpc 配置文件地址: $frpcConfig"
-fi
 echo "Network RC 控制界面访问密码: $password"
 echo "本地端口: $localPort"
 echo ""
 echo ""
 echo ""
 
-
 read -p "输入 ok 继续安装， 输入其他结束:" ok
 echo "$ok"
-
 
 if [ "$ok" = "ok" ]; then
   echo ""
@@ -77,13 +66,12 @@ if [ "$ok" = "ok" ]; then
   fi
 
   echo "安装依赖..."
-  if sudo apt install ffmpeg pulseaudio -y; then
+  if sudo apt install ffmpeg pulseaudio gpsd gpsd-clients sqlite3 -y; then
     echo "安装依赖成功"
   else
     echo "安装依赖失败"
     exit 1
   fi
-
 
   echo ""
   echo ""
@@ -113,7 +101,6 @@ if [ "$ok" = "ok" ]; then
   echo "解压 Network RC 中..."
   tar -zxf /tmp/network-rc.tar.gz -C /home/pi/
 
-
   echo ""
   echo ""
   echo ""
@@ -127,7 +114,10 @@ if [ "$ok" = "ok" ]; then
   [Service]
   User=pi
   Type=simple
-  ExecStart=/home/pi/network-rc/node /home/pi/network-rc/index.js --frpConfig \"$frpcConfig\" --password \"$password\" --subDomain \"$subDomain\" --localPort \"$localPort\"
+  Environment=\"CLOUDFLARE_TOKEN=$cfToken\"
+  Environment=\"GPS_PORT=$gpsPort\"
+  Environment=\"GPS_BAUD_RATE=$gpsBaudRate\"
+  ExecStart=/home/pi/network-rc/node /home/pi/network-rc/index.js --password \"$password\" --localPort \"$localPort\" --enableGPS \"$enableGPS\"
   Restart=always
   RestartSec=15s
 
@@ -138,24 +128,15 @@ if [ "$ok" = "ok" ]; then
   echo ""
   echo "创建 Network RC 服务完成"
 
-
   sudo systemctl enable network-rc.service
   echo "重启 Network RC 服务"
   sudo systemctl restart network-rc.service
-
 
   echo ""
   echo ""
   echo ""
   echo "安装完成"
-  if [ $defaultFrp = true ]; then
-    echo "域名前缀: $subDomain"
-    echo "Network RC 控制界面访问地址: https://${subDomain}.nrc.esonwong.com:9000"
-  else
-    echo "frpc 配置文件地址: $frpcConfig"
-  fi
   echo "Network RC 控制界面访问密码: $password"
-
 else 
   exit 0
 fi

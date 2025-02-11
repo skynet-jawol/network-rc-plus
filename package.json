@@ -9,7 +9,9 @@
   "scripts": {
     "start": "nodemon --inspect index.js --lp=8888 --subDomain=dev",
     "server": "node index.js",
-    "build": "cd front-end && yarn && yarn build && cd .. && rm -fr network-rc dist && mkdir network-rc && cp index.js network-rc/ && cp package.json network-rc/ && cp -r lib network-rc/ && cp -r assets network-rc/ && cp -r node_modules network-rc/ && mkdir network-rc/front-end && cp -r front-end/build network-rc/front-end/ && cp /usr/bin/node network-rc/ && mkdir dist && tar -zcvf dist/network-rc.tar.gz network-rc && rm -rf network-rc"
+    "build": "cd front-end && yarn && yarn build && cd .. && rm -fr network-rc dist && mkdir network-rc && cp index.js network-rc/ && cp package.json network-rc/ && cp -r lib network-rc/ && cp -r assets network-rc/ && cp -r node_modules network-rc/ && mkdir network-rc/front-end && cp -r front-end/build network-rc/front-end/ && cp /usr/bin/node network-rc/ && mkdir dist && tar -zcvf dist/network-rc.tar.gz network-rc && rm -rf network-rc",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
   },
   "dependencies": {
     "@clusterws/cws": "^1.5.0",
@@ -29,16 +31,20 @@
     "qrcode": "^1.4.4",
     "rpio": "^2.1.1",
     "rpio-pwm": "https://github.com/itiwll/rpio-pwm.git",
+    "serialport": "^9.2.8",
     "split": "^1.0.1",
     "stream-split": "^1.1.0",
     "uuidv4": "^6.0.7",
     "wav": "^1.0.2",
     "winston": "^3.5.1",
-    "wrtc": "^0.4.7",
-    "xf-tts-socket": "^1.2.2",
-    "yargs": "^15.3.1"
+    "wrtc": "^0.4.7"
   },
   "devDependencies": {
-    "nodemon": "^2.0.2"
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "typescript": "^4.9.5"
   }
 }
