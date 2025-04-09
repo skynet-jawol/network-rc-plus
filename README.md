@@ -4,24 +4,24 @@
 
 Network RC' feature:
 
-- low-latency control and network video￼transmission
+- Low-latency control and network video￼transmission
 - 27 custom channels(PWM or Height/Low)
-- multiple cameras
-- touch, gamepad, keyboard, RC transmitter
-- real-time listening and voice sending/two-way voice call
-- server or RTC transmission, auto switch
-- voice broadcast
-- playing audio
-- remote shared
+- Multiple cameras with adaptive resolution
+- Touch, gamepad, keyboard, RC transmitter control
+- Real-time listening and voice sending/two-way voice call
+- Cloudflare Tunnel for remote access
+- GPS positioning and track recording
+- Comprehensive logging system
+- Voice broadcast and audio playback
+- Remote shared control
+- WebRTC optimization for 4G networks
 
-## Dependence
+## Dependencies
 
 - ffmpeg: Please make sure ffmpeg is installed, `sudo apt install ffmpeg -y`
-- pulseaudio:
-  ```sh
-  sudo apt install pulseaudio -y
-  sudo apt install libpulse-dev -y
-  ```
+- pulseaudio: `sudo apt install pulseaudio -y`
+- GPS tools: `sudo apt install gpsd gpsd-clients -y`
+- SQLite: `sudo apt install sqlite3 -y`
 - nodejs
 
 ## Install
@@ -83,10 +83,4 @@ How to join a group: add personal WeChat account `EsonWong_`, remark `Network RC
 - [My Youtube Home Page](https://www.youtube.com/c/itiwll)
 
 ## Credits
-
-- [ws-avc-player](https://github.com/matijagaspar/ws-avc-player)
-- [@clusterws/cws](https://github.com/ClusterWS/cWS)
-- [rpio](https://github.com/jperkin/node-rpio)
-- [rpio-pwm](https://github.com/xinkaiwang/rpio-pwm)
-- [xf-tts-socket](https://github.com/jimuyouyou/xf-tts-socket)
-- Eson Wong - Providing free FRP server
+- Cloudflare - Providing free Tunnel service

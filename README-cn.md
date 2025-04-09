@@ -9,14 +9,19 @@ Network RC 是运行在树莓派和浏览器上的网络遥控车软件。具备
 - 支持多摄像头，自适应传输分辨率
 - 支持触屏操作、游戏手柄、枪控、板控
 - 支持实时语音收听和语音喊话/语音对讲
-- 内置服务器网络穿透/点对点连接 NAT 网络穿透自动切换
-- 系统语音播报
-- 播放音频
+- 支持 Cloudflare Tunnel/FRP 远程访问
+- GPS 定位和轨迹记录
+- 完整的日志系统
+- 系统语音播报和音频播放
 - 远程分享控制
+- 4G网络下的WebRTC优化
 
 ## 依赖
 
 - ffmpeg: 运行前请确保树莓派上安装了 ffmpeg，安装方法 `sudo apt install ffmpeg -y`
+- pulseaudio: `sudo apt install pulseaudio -y`
+- GPS工具: `sudo apt install gpsd gpsd-clients -y`
+- SQLite: `sudo apt install sqlite3 -y`
 - nodejs
 
 ## 安装
@@ -59,9 +64,39 @@ node index.js -p password
 
 # 启用网络穿透
 node index.js -f -o 9088 --tsl
+```
+
+## 功能
+- 支持 Cloudflare Tunnel 远程访问
+- 支持 WebRTC 音视频传输
+- 支持 PWA
+- 支持语音播报
+- 支持 GPS 定位
+- 支持自定义通道
+- 支持自定义 UI
+- 支持分享控制链接
+- 支持自动刹车
+- 支持电压检测
+- 支持自动更新
+
+## 更新日志
+- [x] 添加 GPS 功能
+- [x] 添加电压检测功能
+- [x] 添加自动更新功能
+- [x] 添加自动刹车功能
+- [x] 添加分享控制链接功能
+- [x] 添加自定义通道功能
+- [x] 添加自定义 UI 功能
+- [x] 添加语音播报功能
+- [x] 添加 PWA 功能
+- [x] 添加 WebRTC 音视频传输功能
+- [x] 添加 Cloudflare Tunnel 远程访问功能
+
+## 致谢
+- Cloudflare - 提供免费的 Tunnel 服务
 
 # 自定义网络穿透服务器
-node index.js -f -o 9088 --frpServer xxxxxxxxxx --frpServerPort xxx --frpServerToken xxxxx
+node index.js -f -o 9088
 ```
 
 ## 接线图

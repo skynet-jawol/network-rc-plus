@@ -3,7 +3,7 @@ const { WebSocketServer } = require("@clusterws/cws");
 const package = require("./package.json");
 const md5 = require("md5");
 const { spawn } = require("child_process");
-const { defaultFrpc, configFrpc } = require("./lib/frpc");
+
 const TTS = require("./lib/tts");
 const CameraServer = require("./lib/CameraServer");
 const AudioServer = require("./lib/AudioServer");
@@ -33,11 +33,6 @@ const argv = require("yargs")
       describe: "密码",
       type: "string",
     },
-    n: {
-      alias: "subDomain",
-      describe: "默认 frp 服务的子域名",
-      type: "string",
-    },
     t: {
       alias: "tts",
       describe: "是否开启语音播报",
@@ -49,19 +44,14 @@ const argv = require("yargs")
       default: 8080,
       describe: "local server port",
       type: "number",
-    },
-    f: {
-      alias: "frpConfig",
-      describe: "frp 配置文件路径",
-      type: "string",
-    },
+    }
   })
   .env("NETWORK_RC")
   .help().argv;
 
 console.info(`当前 Network RC 版本: ${package.version}`);
 
-const { subDomain, frpConfig, localPort, password } = argv;
+const { localPort, password } = argv;
 const clients = new Set();
 let cameraList = [];
 let sharedEndTimerId;
@@ -680,13 +670,7 @@ server.on("error", (e) => {
 
     changeLedStatus("running");
 
-    if (subDomain) {
-      defaultFrpc(subDomain);
-    }
 
-    if (frpConfig) {
-      configFrpc(frpConfig);
-    }
   });
 })();
 
