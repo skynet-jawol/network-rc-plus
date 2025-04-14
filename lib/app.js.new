@@ -1,0 +1,159 @@
+const express = require('express');
+const path = require('path');
+const http = require('http');
+const WebSocket = require('ws');
+const { spawn } = require('child_process');
+const yargs = require('yargs');
+const cloudflare = require('./cloudflare');
+const CameraServer = require('./CameraServer');
+const AudioServer = require('./AudioServer');
+const MicrophoneServer = require('./MicrophoneServer');
+const status = require('./status');
+const GPS = require('./gps');
+
+const argv = yargs
+  .option('password', {
+    alias: 'p',
+    description: '设置访问密码',
+    default: 'networkrc'
+  })
+  .option('localPort', {
+    alias: 'l',
+    description: '本地端口',
+    default: 8080
+  })
+  .option('frpConfig', {
+    description: 'frpc配置文件路径'
+  })
+  .option('subDomain', {
+    description: 'frp子域名'
+  })
+  .option('cloudflareConfig', {
+    description: 'Cloudflare Zero Trust配置文件路径'
+  })
+  .option('enableGPS', {
+    description: '启用GPS功能',
+    type: 'boolean',
+    default: false
+  })
+  .option('gpsDevice', {
+    description: 'GPS设备路径',
+    default: '/dev/ttyAMA0'
+  })
+  .help()
+  .alias('help', 'h')
+  .argv;
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// 初始化GPS
+let gpsTracker = null;
+if (argv.enableGPS) {
+  gpsTracker = new GPS();
+  gpsTracker.updateConfig({
+    enabled: true,
+    refreshRate: 5,
+    accuracyThreshold: 10
+  });
+  gpsTracker.startTracking();
+  status.update('gps', 'active');
+}
+
+// 设置静态文件目录
+app.use(express.static(path.join(__dirname, '../front-end/build')));
+
+// API路由
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: 'running',
+    gps: gpsTracker ? gpsTracker.currentLocation : null
+  });
+});
+
+// 启动服务器
+server.listen(argv.localPort, () => {
+  console.log(`Network RC服务已启动，监听端口 ${argv.localPort}`);
+  
+  // 启动摄像头服务
+  CameraServer.startStream();
+  
+  // 启动音频服务
+  AudioServer.startStream();
+  
+  // 启动麦克风服务
+  MicrophoneServer.startStream();
+  
+  // 根据配置启动远程访问
+  if (argv.frpConfig) {
+    // 使用自定义frp配置
+    console.log(`使用自定义frp配置: ${argv.frpConfig}`);
+    // 这里添加frp启动代码
+  } else if (argv.subDomain) {
+    // 使用内置frp服务器
+    console.log(`使用内置frp服务器，子域名: ${argv.subDomain}`);
+    // 这里添加内置frp启动代码
+  } else if (argv.cloudflareConfig) {
+    // 使用Cloudflare Zero Trust
+    console.log(`使用Cloudflare Zero Trust，配置文件: ${argv.cloudflareConfig}`);
+    cloudflare.startTunnel(argv.cloudflareConfig);
+  } else {
+    console.log('未配置远程访问方式，仅支持本地访问');
+  }
+});
+
+// WebSocket连接处理
+wss.on('connection', (ws) => {
+  console.log('WebSocket客户端已连接');
+  
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message);
+      
+      // 处理GPS配置更新
+      if (data.type === 'updateGPSConfig' && gpsTracker) {
+        gpsTracker.updateConfig(data.config);
+        ws.send(JSON.stringify({
+          type: 'gpsConfigUpdated',
+          config: gpsTracker.config
+        }));
+      }
+      
+      // 处理其他消息类型
+      // ...
+      
+    } catch (err) {
+      console.error('处理WebSocket消息时出错:', err);
+    }
+  });
+  
+  ws.on('close', () => {
+    console.log('WebSocket客户端已断开');
+  });
+});
+
+// 优雅关闭
+process.on('SIGINT', () => {
+  console.log('正在关闭服务...');
+  
+  // 停止所有服务
+  CameraServer.stopStream();
+  AudioServer.stopStream();
+  MicrophoneServer.stopStream();
+  
+  if (gpsTracker) {
+    gpsTracker.stopTracking();
+  }
+  
+  if (argv.cloudflareConfig) {
+    cloudflare.stopTunnel();
+  }
+  
+  server.close(() => {
+    console.log('服务已关闭');
+    process.exit(0);
+  });
+});
+
+module.exports = { app, server };

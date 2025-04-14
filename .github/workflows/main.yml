@@ -21,11 +21,19 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
+    # Setup Node.js environment
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16.x'
+        cache: 'yarn'
+
     # Runs a single command using the runners shell
     - name: Build front end
       run: |
         cd front-end
-        npm install && npm run build
+        yarn install
+        yarn build
     
 #     - name: Build server
 #       run: |

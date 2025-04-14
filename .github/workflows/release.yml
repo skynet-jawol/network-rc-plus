@@ -13,14 +13,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: '10.x'
+          node-version: '16.x'
+          cache: 'yarn'
       - name: Build front-end
         run: | 
           cd front-end
           yarn
           yarn build
+      - name: Install dependencies
+        run: |
+          yarn install
+          
       - name: Package
         shell: bash
         run: |
@@ -32,6 +37,8 @@ jobs:
           cp -r node_modules network-rc/
           mkdir network-rc/front-end
           cp -r front-end/build network-rc/front-end/
+          # 添加安装脚本
+          cp install_with_cloudflare.sh network-rc/
           mkdir dist
           tar -zcvf dist/network-rc.tar.gz network-rc
           rm -rf network-rc
