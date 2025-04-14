@@ -3,8 +3,9 @@
 
 
 VERSION_CODENAME=$(lsb_release -cs);
-if [ "$VERSION_CODENAME" != "buster" ]; then
-    echo "只支持 buster 系统"
+# 支持Bookworm和Buster系统
+if [ "$VERSION_CODENAME" != "buster" ] && [ "$VERSION_CODENAME" != "bookworm" ]; then
+    echo "只支持 buster 和 bookworm 系统"
     exit 1
 fi
 
@@ -20,20 +21,20 @@ else
   DOWNLOAD_LINK="https://download.esonwong.com/network-rc/network-rc-${NETWORK_RC_VERSION}.tar.gz"
 fi
 
-read -p "使用内置 frp 服务器(yes/no, 默认 yes):" defaultFrp
-defaultFrp=${defaultFrp:-yes}
+read -p "使用Cloudflare Zero Trust隧道(yes/no, 默认 yes):" useCloudflare
+useCloudflare=${useCloudflare:-yes}
 
-echo defaultFrp: $defaultFrp
+echo useCloudflare: $useCloudflare
 
-if [ "$defaultFrp" = "yes" ] || [ "$defaultFrp" = "y"  ]; then
-  defaultFrp=true
-  defaultSubDomain=$(cat /proc/sys/kernel/random/uuid | cut -c 1-4)
-  read -p "域名前缀(默认 $defaultSubDomain):" subDomain
-  subDomain=${subDomain:-$defaultSubDomain}
+if [ "$useCloudflare" = "yes" ] || [ "$useCloudflare" = "y"  ]; then
+  useCloudflare=true
+  defaultTunnelName=$(cat /proc/sys/kernel/random/uuid | cut -c 1-8)
+  read -p "隧道名称(默认 $defaultTunnelName):" tunnelName
+  tunnelName=${tunnelName:-$defaultTunnelName}
 else
-  defaultFrpcConfig="/home/pi/frpc.ini"
-  read -p "frpc 配置文件地址(默认 $defaultFrpcConfig):" frpcConfig
-  frpcConfig=${frpcConfig:-$defaultFrpcConfig}
+  defaultCloudflareConfig="/home/pi/cloudflared-config.yml"
+  read -p "Cloudflare隧道配置文件地址(默认 $defaultCloudflareConfig):" cloudflareConfig
+  cloudflareConfig=${cloudflareConfig:-$defaultCloudflareConfig}
 fi
 
 read -p "Network RC 密码(默认 networkrc):" password
@@ -47,12 +48,12 @@ echo ""
 echo ""
 echo "你的设置如下"
 echo "----------------------------------------"
-if [ $defaultFrp = true ]; then
-  echo "域名前缀: $subDomain"
-  echo "Network RC 控制界面访问地址: https://${subDomain}.nrc.esonwong.com:9000";
+if [ $useCloudflare = true ]; then
+  echo "Cloudflare隧道名称: $tunnelName"
+  echo "安装完成后，Network RC将自动创建Cloudflare隧道并显示访问地址"
 else
-  echo "使用自定义 frp 服务器"
-  echo "frpc 配置文件地址: $frpcConfig"
+  echo "使用自定义Cloudflare隧道配置"
+  echo "Cloudflare配置文件地址: $cloudflareConfig"
 fi
 echo "Network RC 控制界面访问密码: $password"
 echo "本地端口: $localPort"
@@ -77,11 +78,42 @@ if [ "$ok" = "ok" ]; then
   fi
 
   echo "安装依赖..."
-  if sudo apt install ffmpeg pulseaudio -y; then
-    echo "安装依赖成功"
+  # 检测系统是否使用PipeWire
+  if [ "$VERSION_CODENAME" = "bookworm" ]; then
+    echo "检测到Bookworm系统，安装PipeWire相关依赖..."
+    if sudo apt install ffmpeg pipewire pipewire-pulse wireplumber -y; then
+      echo "安装PipeWire依赖成功"
+      # 检查PipeWire服务状态
+      if systemctl --user is-active pipewire.service > /dev/null 2>&1; then
+        echo "PipeWire服务已运行"
+      else
+        echo "启动PipeWire服务..."
+        systemctl --user enable --now pipewire.service pipewire-pulse.service
+      fi
+    else
+      echo "安装PipeWire依赖失败，尝试安装PulseAudio..."
+      if sudo apt install ffmpeg pulseaudio -y; then
+        echo "安装PulseAudio依赖成功"
+      else
+        echo "安装基础依赖失败"
+        exit 1
+      fi
+    fi
   else
-    echo "安装依赖失败"
-    exit 1
+    # Buster系统使用PulseAudio
+    if sudo apt install ffmpeg pulseaudio -y; then
+      echo "安装基础依赖成功"
+    else
+      echo "安装基础依赖失败"
+      exit 1
+    fi
+  fi
+
+  echo "安装Cloudflare客户端..."
+  if bash /home/pi/network-rc/lib/cloudflare/install-cloudflared.sh; then
+    echo "安装Cloudflare客户端成功"
+  else
+    echo "安装Cloudflare客户端失败，但将继续安装Network RC"
   fi
 
 
@@ -121,13 +153,13 @@ if [ "$ok" = "ok" ]; then
 
   echo "[Unit]
   Description=network-rc
-  After=syslog.target  network.target
+  After=syslog.target network.target
   Wants=network.target
 
   [Service]
   User=pi
   Type=simple
-  ExecStart=/home/pi/network-rc/node /home/pi/network-rc/index.js --frpConfig \"$frpcConfig\" --password \"$password\" --subDomain \"$subDomain\" --localPort \"$localPort\"
+  ExecStart=/home/pi/network-rc/node /home/pi/network-rc/index.js --cloudflareConfig \"$cloudflareConfig\" --password \"$password\" --tunnelName \"$tunnelName\" --localPort \"$localPort\"
   Restart=always
   RestartSec=15s
 
@@ -148,11 +180,12 @@ if [ "$ok" = "ok" ]; then
   echo ""
   echo ""
   echo "安装完成"
-  if [ $defaultFrp = true ]; then
-    echo "域名前缀: $subDomain"
-    echo "Network RC 控制界面访问地址: https://${subDomain}.nrc.esonwong.com:9000"
+  if [ $useCloudflare = true ]; then
+    echo "Cloudflare隧道名称: $tunnelName"
+    echo "Network RC 将在启动后自动创建Cloudflare隧道并显示访问地址"
+    echo "您可以通过查看系统日志获取访问地址: sudo journalctl -u network-rc -f"
   else
-    echo "frpc 配置文件地址: $frpcConfig"
+    echo "Cloudflare配置文件地址: $cloudflareConfig"
   fi
   echo "Network RC 控制界面访问密码: $password"
 

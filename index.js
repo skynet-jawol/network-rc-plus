@@ -3,7 +3,7 @@ const { WebSocketServer } = require("@clusterws/cws");
 const package = require("./package.json");
 const md5 = require("md5");
 const { spawn } = require("child_process");
-const { defaultFrpc, configFrpc } = require("./lib/frpc");
+const { startCloudflare, configCloudflare } = require("./lib/cloudflare");
 const TTS = require("./lib/tts");
 const CameraServer = require("./lib/CameraServer");
 const AudioServer = require("./lib/AudioServer");
@@ -23,6 +23,9 @@ const {
 } = require("./lib/channel");
 const WebRTC = require("./lib/WebRTC");
 const ad = require("./lib/ads1115");
+const { startFrpc } = require("./lib/frpc");
+const { uuid } = require("uuidv4");
+const gps = require("./lib/gps");
 
 const argv = require("yargs")
   .usage("Usage: $0 [options]")
@@ -34,8 +37,8 @@ const argv = require("yargs")
       type: "string",
     },
     n: {
-      alias: "subDomain",
-      describe: "默认 frp 服务的子域名",
+      alias: "tunnelName",
+      describe: "Cloudflare隧道名称",
       type: "string",
     },
     t: {
@@ -50,9 +53,9 @@ const argv = require("yargs")
       describe: "local server port",
       type: "number",
     },
-    f: {
-      alias: "frpConfig",
-      describe: "frp 配置文件路径",
+    c: {
+      alias: "cloudflareConfig",
+      describe: "Cloudflare隧道配置文件路径",
       type: "string",
     },
   })
@@ -61,7 +64,8 @@ const argv = require("yargs")
 
 console.info(`当前 Network RC 版本: ${package.version}`);
 
-const { subDomain, frpConfig, localPort, password } = argv;
+const { localPort, password } = argv;
+let { tunnelName, cloudflareConfig } = argv;
 const clients = new Set();
 let cameraList = [];
 let sharedEndTimerId;
@@ -680,12 +684,31 @@ server.on("error", (e) => {
 
     changeLedStatus("running");
 
-    if (subDomain) {
-      defaultFrpc(subDomain);
-    }
-
-    if (frpConfig) {
-      configFrpc(frpConfig);
+    // 优先使用配置中的Cloudflare设置，如果没有则使用命令行参数
+    if (status.config.useCloudflare) {
+      if (status.config.useCustomConfig && status.config.cloudflareConfigPath) {
+        // 使用自定义配置文件
+        configCloudflare(status.config.cloudflareConfigPath);
+      } else if (status.config.tunnelName) {
+        // 使用配置中的隧道名称
+        startCloudflare(status.config.tunnelName, localPort);
+      } else if (tunnelName) {
+        // 使用命令行参数中的隧道名称
+        startCloudflare(tunnelName, localPort);
+      } else {
+        // 使用随机隧道名称
+        const randomTunnelName = require('crypto').randomBytes(4).toString('hex');
+        startCloudflare(randomTunnelName, localPort);
+      }
+    } else {
+      // 兼容旧版本的命令行参数
+      if (tunnelName) {
+        startCloudflare(tunnelName, localPort);
+      }
+      
+      if (cloudflareConfig) {
+        configCloudflare(cloudflareConfig);
+      }
     }
   });
 })();

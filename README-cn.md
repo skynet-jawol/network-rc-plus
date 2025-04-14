@@ -9,7 +9,7 @@ Network RC 是运行在树莓派和浏览器上的网络遥控车软件。具备
 - 支持多摄像头，自适应传输分辨率
 - 支持触屏操作、游戏手柄、枪控、板控
 - 支持实时语音收听和语音喊话/语音对讲
-- 内置服务器网络穿透/点对点连接 NAT 网络穿透自动切换
+- Cloudflare Zero Trust Tunnels网络穿透/点对点连接 NAT 网络穿透自动切换
 - 系统语音播报
 - 播放音频
 - 远程分享控制
@@ -57,11 +57,11 @@ node index.js
 # 设置密码
 node index.js -p password
 
-# 启用网络穿透
-node index.js -f -o 9088 --tsl
+# 启用Cloudflare隧道网络穿透
+node index.js -n my-tunnel-name
 
-# 自定义网络穿透服务器
-node index.js -f -o 9088 --frpServer xxxxxxxxxx --frpServerPort xxx --frpServerToken xxxxx
+# 使用自定义Cloudflare隧道配置文件
+node index.js -c /path/to/cloudflare-config.yml
 ```
 
 ## 接线图

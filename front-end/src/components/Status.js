@@ -182,13 +182,22 @@ export default function Status({
         isLogin &&
         Object.keys(statusInfo).map((key) => {
           const { color, label, value } = statusInfo[key];
-          return !["gps"].includes(label) ? (
+          if (label === 'gps') {
+            return (
+              <Form.Item key={key}>
+                <Tag color={color} icon={<LinkOutlined />}>
+                  GPS:{value.fix ? '已定位' : '未定位'}
+                </Tag>
+              </Form.Item>
+            );
+          }
+          return (
             <Form.Item key={key}>
               <Tag color={color}>
                 {label}:{value}
               </Tag>
             </Form.Item>
-          ) : undefined;
+          );
         })}
 
       {wsConnected && sharedEndTime && (

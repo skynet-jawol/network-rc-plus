@@ -8,6 +8,8 @@ import ChannelSetting from "./ChannelSetting";
 import BasicSetting from "./BasicSetting";
 import Backup from "./Backup";
 import SoundSetting from "./SoundSetting";
+import CloudflareSetting from "./CloudflareSetting";
+import GPSSetting from "./GPSSetting";
 import Nav from "./Nav";
 const { TabPane } = Tabs;
 
@@ -139,6 +141,18 @@ export default function Setting({
           serverConfig={serverConfig}
           updateVersion={updateVersion}
           updateStaus={updateStaus}
+        />
+      </TabPane>
+      <TabPane tab="Cloudflare穿透" key="cloudflare">
+        <CloudflareSetting
+          saveServerConfig={saveServerConfig}
+          serverConfig={serverConfig}
+        />
+      </TabPane>
+      <TabPane tab="GPS设置" key="gps">
+        <GPSSetting
+          saveServerConfig={saveServerConfig}
+          serverConfig={serverConfig}
         />
       </TabPane>
     </Tabs>

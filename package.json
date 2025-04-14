@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@clusterws/cws": "^1.5.0",
+    "@serialport/parser-readline": "^10.5.0",
     "ads1115": "^1.2.0",
     "body-parser": "^1.19.0",
     "compression": "^1.7.4",
@@ -29,6 +30,7 @@
     "qrcode": "^1.4.4",
     "rpio": "^2.1.1",
     "rpio-pwm": "https://github.com/itiwll/rpio-pwm.git",
+    "serialport": "^10.5.0",
     "split": "^1.0.1",
     "stream-split": "^1.1.0",
     "uuidv4": "^6.0.7",
