@@ -26,18 +26,23 @@ jobs:
           yarn config set registry https://registry.npmjs.org/
           # 清除yarn缓存，确保不使用淘宝镜像
           yarn cache clean
-          # 创建临时脚本替换yarn.lock中的淘宝镜像URL
+          # 创建临时脚本替换yarn.lock中的淘宝镜像URL和错误的下载路径格式
           sed -i 's|https://registry.npm.taobao.org|https://registry.npmjs.org|g' yarn.lock
+          sed -i 's|https://registry.npmjs.org/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.nlark.com/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
           # 添加NODE_TLS_REJECT_UNAUTHORIZED=0以绕过证书验证问题
-          NODE_TLS_REJECT_UNAUTHORIZED=0 yarn --network-timeout 600000 --registry https://registry.npmjs.org/
+          NODE_TLS_REJECT_UNAUTHORIZED=0 yarn --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
           NODE_TLS_REJECT_UNAUTHORIZED=0 yarn build --registry https://registry.npmjs.org/
       - name: Install dependencies
         run: |
           yarn config set registry https://registry.npmjs.org/
           # 清除yarn缓存，确保不使用淘宝镜像
           yarn cache clean
+          # 修复yarn.lock中的错误URL格式
+          sed -i 's|https://registry.npmjs.org/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.nlark.com/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
           # 添加NODE_TLS_REJECT_UNAUTHORIZED=0以绕过证书验证问题
-          NODE_TLS_REJECT_UNAUTHORIZED=0 yarn install --network-timeout 600000 --registry https://registry.npmjs.org/
+          NODE_TLS_REJECT_UNAUTHORIZED=0 yarn install --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
           
       - name: Package
         shell: bash
