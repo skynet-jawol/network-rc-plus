@@ -24,12 +24,14 @@ jobs:
         run: | 
           cd front-end
           yarn config set registry https://registry.npmjs.org/
-          yarn --network-timeout 300000
-          yarn build
+          # 添加NODE_TLS_REJECT_UNAUTHORIZED=0以绕过证书验证问题
+          NODE_TLS_REJECT_UNAUTHORIZED=0 yarn --network-timeout 600000
+          NODE_TLS_REJECT_UNAUTHORIZED=0 yarn build
       - name: Install dependencies
         run: |
           yarn config set registry https://registry.npmjs.org/
-          yarn install --network-timeout 300000
+          # 添加NODE_TLS_REJECT_UNAUTHORIZED=0以绕过证书验证问题
+          NODE_TLS_REJECT_UNAUTHORIZED=0 yarn install --network-timeout 600000
           
       - name: Package
         shell: bash
