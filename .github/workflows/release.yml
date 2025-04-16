@@ -40,8 +40,8 @@ jobs:
           # 修复下载路径
           sed -i 's|/download/|/|g' yarn.lock
           
-          # 更新Babel相关依赖到兼容版本
-          yarn add @babel/core@^7.16.0 --dev --registry https://registry.npmjs.org/
+          # 添加Babel相关依赖到兼容版本
+          yarn add @babel/core@^7.16.0 @babel/preset-env@^7.16.0 @babel/preset-react@^7.16.0 babel-loader@^8.2.3 --dev --registry https://registry.npmjs.org/
           
           # 如果yarn.lock文件仍有问题，尝试完全重新生成
           if ! yarn check --integrity &>/dev/null; then
@@ -52,6 +52,9 @@ jobs:
             # 如果yarn.lock文件正常，直接使用
             NODE_TLS_REJECT_UNAUTHORIZED=0 yarn --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
           fi
+          
+          # 更新react-scripts到兼容版本
+          yarn add react-scripts@4.0.3 --dev --registry https://registry.npmjs.org/
           
           # 添加NODE_OPTIONS环境变量以解决Node.js v18与webpack不兼容的问题
           export NODE_OPTIONS="--openssl-legacy-provider"
