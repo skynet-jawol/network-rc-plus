@@ -50,6 +50,8 @@ jobs:
             NODE_TLS_REJECT_UNAUTHORIZED=0 yarn --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
           fi
           
+          # 添加NODE_OPTIONS环境变量以解决Node.js v18与webpack不兼容的问题
+          export NODE_OPTIONS="--openssl-legacy-provider"
           NODE_TLS_REJECT_UNAUTHORIZED=0 yarn build --registry https://registry.npmjs.org/
       - name: Install dependencies
         run: |
@@ -76,6 +78,8 @@ jobs:
             sed -i 's|https://registry.nlark.com|https://registry.npmjs.org|g' yarn.lock
             sed -i 's|https://registry.yarnpkg.com|https://registry.npmjs.org|g' yarn.lock
           fi
+          # 添加NODE_OPTIONS环境变量以解决Node.js v18与webpack不兼容的问题
+          export NODE_OPTIONS="--openssl-legacy-provider"
           # 添加NODE_TLS_REJECT_UNAUTHORIZED=0以绕过证书验证问题
           NODE_TLS_REJECT_UNAUTHORIZED=0 yarn install --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
           
