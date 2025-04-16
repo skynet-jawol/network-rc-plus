@@ -30,6 +30,10 @@ jobs:
           sed -i 's|https://registry.npm.taobao.org|https://registry.npmjs.org|g' yarn.lock
           sed -i 's|https://registry.npmjs.org/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
           sed -i 's|https://registry.nlark.com/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
+          # 修复更多可能的错误URL格式
+          sed -i 's|https://registry.npmjs.org/.*download/|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.nlark.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.yarnpkg.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
           # 添加NODE_TLS_REJECT_UNAUTHORIZED=0以绕过证书验证问题
           NODE_TLS_REJECT_UNAUTHORIZED=0 yarn --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
           NODE_TLS_REJECT_UNAUTHORIZED=0 yarn build --registry https://registry.npmjs.org/
@@ -39,8 +43,19 @@ jobs:
           # 清除yarn缓存，确保不使用淘宝镜像
           yarn cache clean
           # 修复yarn.lock中的错误URL格式
+          sed -i 's|https://registry.npm.taobao.org|https://registry.npmjs.org|g' yarn.lock
           sed -i 's|https://registry.npmjs.org/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
           sed -i 's|https://registry.nlark.com/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.yarnpkg.com/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
+          # 修复更多可能的错误URL格式
+          sed -i 's|https://registry.npmjs.org/.*download/|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.nlark.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.yarnpkg.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.yarnpkg.com/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
+          # 修复更多可能的错误URL格式
+          sed -i 's|https://registry.npmjs.org/.*download/|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.nlark.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.yarnpkg.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
           # 添加NODE_TLS_REJECT_UNAUTHORIZED=0以绕过证书验证问题
           NODE_TLS_REJECT_UNAUTHORIZED=0 yarn install --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
           
