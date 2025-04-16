@@ -40,6 +40,9 @@ jobs:
           # 修复下载路径
           sed -i 's|/download/|/|g' yarn.lock
           
+          # 更新Babel相关依赖到兼容版本
+          yarn add @babel/core@^7.16.0 --dev --registry https://registry.npmjs.org/
+          
           # 如果yarn.lock文件仍有问题，尝试完全重新生成
           if ! yarn check --integrity &>/dev/null; then
             echo "yarn.lock文件可能已损坏，尝试重新生成"
