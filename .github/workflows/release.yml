@@ -27,43 +27,55 @@ jobs:
           # 清除yarn缓存，确保不使用淘宝镜像
           yarn cache clean
           # 创建临时脚本替换yarn.lock中的淘宝镜像URL和错误的下载路径格式
+          # 备份原始yarn.lock文件
+          cp yarn.lock yarn.lock.backup
+          
+          # 使用更安全的替换方式
           sed -i 's|https://registry.npm.taobao.org|https://registry.npmjs.org|g' yarn.lock
-          sed -i 's|https://registry.npmjs.org/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.nlark.com/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
-          # 修复更多可能的错误URL格式
-          sed -i 's|https://registry.npmjs.org/.*download/|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.nlark.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.yarnpkg.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
-          # 修复包含查询参数的URL格式
-          sed -i 's|https://registry.npmjs.org/[^?]*?cache=.*|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.nlark.com/[^?]*?cache=.*|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.yarnpkg.com/[^?]*?cache=.*|https://registry.npmjs.org/|g' yarn.lock
-          # 添加NODE_TLS_REJECT_UNAUTHORIZED=0以绕过证书验证问题
-          NODE_TLS_REJECT_UNAUTHORIZED=0 yarn --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
+          sed -i 's|https://registry.nlark.com|https://registry.npmjs.org|g' yarn.lock
+          sed -i 's|https://registry.yarnpkg.com|https://registry.npmjs.org|g' yarn.lock
+          
+          # 尝试修复包含查询参数的URL，使用更保守的替换方式
+          sed -i 's|?cache=.*"|"|g' yarn.lock
+          # 修复下载路径
+          sed -i 's|/download/|/|g' yarn.lock
+          
+          # 如果yarn.lock文件仍有问题，尝试完全重新生成
+          if ! yarn check --integrity &>/dev/null; then
+            echo "yarn.lock文件可能已损坏，尝试重新生成"
+            rm yarn.lock
+            NODE_TLS_REJECT_UNAUTHORIZED=0 yarn install --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
+          else
+            # 如果yarn.lock文件正常，直接使用
+            NODE_TLS_REJECT_UNAUTHORIZED=0 yarn --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
+          fi
+          
           NODE_TLS_REJECT_UNAUTHORIZED=0 yarn build --registry https://registry.npmjs.org/
       - name: Install dependencies
         run: |
           yarn config set registry https://registry.npmjs.org/
           # 清除yarn缓存，确保不使用淘宝镜像
           yarn cache clean
-          # 修复yarn.lock中的错误URL格式
+          # 备份原始yarn.lock文件
+          cp yarn.lock yarn.lock.backup
+          
+          # 使用更安全的替换方式 - 只替换域名部分
           sed -i 's|https://registry.npm.taobao.org|https://registry.npmjs.org|g' yarn.lock
-          sed -i 's|https://registry.npmjs.org/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.nlark.com/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.yarnpkg.com/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
-          # 修复更多可能的错误URL格式
-          sed -i 's|https://registry.npmjs.org/.*download/|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.nlark.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.yarnpkg.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.yarnpkg.com/[^/]*/download/|https://registry.npmjs.org/|g' yarn.lock
-          # 修复更多可能的错误URL格式
-          sed -i 's|https://registry.npmjs.org/.*download/|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.nlark.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.yarnpkg.com/.*download/|https://registry.npmjs.org/|g' yarn.lock
-          # 修复包含查询参数的URL格式
-          sed -i 's|https://registry.npmjs.org/[^?]*?cache=.*|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.nlark.com/[^?]*?cache=.*|https://registry.npmjs.org/|g' yarn.lock
-          sed -i 's|https://registry.yarnpkg.com/[^?]*?cache=.*|https://registry.npmjs.org/|g' yarn.lock
+          sed -i 's|https://registry.nlark.com|https://registry.npmjs.org|g' yarn.lock
+          sed -i 's|https://registry.yarnpkg.com|https://registry.npmjs.org|g' yarn.lock
+          
+          # 修复下载路径和查询参数
+          sed -i 's|/download/|/|g' yarn.lock
+          sed -i 's|?cache=.*"|"|g' yarn.lock
+          # 如果yarn.lock文件仍有问题，尝试使用备份恢复并重新生成
+          if ! yarn check --integrity &>/dev/null; then
+            echo "yarn.lock文件可能已损坏，尝试恢复备份并重新生成"
+            cp yarn.lock.backup yarn.lock
+            # 只替换域名，不修改其他格式
+            sed -i 's|https://registry.npm.taobao.org|https://registry.npmjs.org|g' yarn.lock
+            sed -i 's|https://registry.nlark.com|https://registry.npmjs.org|g' yarn.lock
+            sed -i 's|https://registry.yarnpkg.com|https://registry.npmjs.org|g' yarn.lock
+          fi
           # 添加NODE_TLS_REJECT_UNAUTHORIZED=0以绕过证书验证问题
           NODE_TLS_REJECT_UNAUTHORIZED=0 yarn install --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
           
