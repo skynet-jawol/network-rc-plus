@@ -44,6 +44,8 @@ jobs:
           sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
           # 修复@ctrl/tinycolor等包的错误URL格式
           sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
+          # 添加缺失的包路径分隔符
+          sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
           # 修复其他可能的包URL格式问题
           sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
           # 修复普通包名重复的URL格式问题（如classnames/classnames-2.3.1.tgz）
@@ -104,6 +106,8 @@ jobs:
           sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
           # 修复@ctrl/tinycolor等包的错误URL格式
           sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
+          # 添加缺失的包路径分隔符
+          sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
           # 修复其他可能的包URL格式问题
           sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
           # 修复普通包名重复的URL格式问题（如classnames/classnames-2.3.1.tgz）
