@@ -42,6 +42,8 @@ jobs:
           # 修复@babel/runtime等包的错误URL格式
           sed -i 's|/@babel/runtime/@babel/runtime-|/@babel/runtime-|g' yarn.lock
           sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
+          # 修复@ctrl/tinycolor等包的错误URL格式
+          sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
           
           # 添加Babel相关依赖到兼容版本
           yarn add @babel/core@^7.16.0 @babel/preset-env@^7.16.0 @babel/preset-react@^7.16.0 babel-loader@^8.2.3 --dev --registry https://registry.npmjs.org/
@@ -96,6 +98,8 @@ jobs:
           # 修复@babel/runtime等包的错误URL格式
           sed -i 's|/@babel/runtime/@babel/runtime-|/@babel/runtime-|g' yarn.lock
           sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
+          # 修复@ctrl/tinycolor等包的错误URL格式
+          sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
           # 如果yarn.lock文件仍有问题，尝试使用备份恢复并重新生成
           if ! yarn check --integrity &>/dev/null; then
             echo "yarn.lock文件可能已损坏，尝试恢复备份并重新生成"
@@ -107,6 +111,8 @@ jobs:
             # 修复@babel/runtime等包的错误URL格式
             sed -i 's|/@babel/runtime/@babel/runtime-|/@babel/runtime-|g' yarn.lock
             sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
+            # 修复@ctrl/tinycolor等包的错误URL格式
+            sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
           fi
           # 添加NODE_OPTIONS环境变量以解决Node.js v18与webpack不兼容的问题
           export NODE_OPTIONS="--openssl-legacy-provider"
