@@ -44,10 +44,15 @@ jobs:
           sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
           # 修复@ctrl/tinycolor等包的错误URL格式
           sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
+          # 修复@ant-design/icons等包的错误URL格式
+          sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
+          sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1/-/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
           # 添加缺失的包路径分隔符
           sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
           # 修复其他可能的包URL格式问题
           sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
+          # 修复三层嵌套的URL格式问题
+          sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2/-/@\1/\2-|/@\1/\2-|g' yarn.lock
           # 修复普通包名重复的URL格式问题（如classnames/classnames-2.3.1.tgz）
           sed -i 's|/\([^/@]*\)/\1-|/\1-|g' yarn.lock
           
@@ -106,10 +111,15 @@ jobs:
           sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
           # 修复@ctrl/tinycolor等包的错误URL格式
           sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
+          # 修复@ant-design/icons等包的错误URL格式
+          sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
+          sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1/-/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
           # 添加缺失的包路径分隔符
           sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
           # 修复其他可能的包URL格式问题
           sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
+          # 修复三层嵌套的URL格式问题
+          sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2/-/@\1/\2-|/@\1/\2-|g' yarn.lock
           # 修复普通包名重复的URL格式问题（如classnames/classnames-2.3.1.tgz）
           sed -i 's|/\([^/@]*\)/\1-|/\1-|g' yarn.lock
           # 如果yarn.lock文件仍有问题，尝试使用备份恢复并重新生成
