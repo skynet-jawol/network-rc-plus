@@ -1,172 +1,189 @@
-name: Upload Release Asset
+name: Build and Release
 
 on:
   push:
-    # Sequence of patterns matched against refs/tags
     tags:
-    - 'v*.*.*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'v*.*.*' # 匹配版本标签，例如 v1.0.0, v2.3.1 等
 
 jobs:
   build:
-    name: Upload Release Asset
+    name: Build and Release Asset
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-      - uses: actions/setup-node@v3
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: '18.x'
           cache: 'yarn'
           registry-url: 'https://registry.npmjs.org/'
+
       - name: Build front-end
-        run: | 
-          cd front-end
-          yarn config set registry https://registry.npmjs.org/
-          # 清除yarn缓存，确保不使用淘宝镜像
-          yarn cache clean
-          # 创建临时脚本替换yarn.lock中的淘宝镜像URL和错误的下载路径格式
-          # 备份原始yarn.lock文件
-          cp yarn.lock yarn.lock.backup
-          
-          # 使用更安全的替换方式
-          sed -i 's|https://registry.npm.taobao.org|https://registry.npmjs.org|g' yarn.lock
-          sed -i 's|https://registry.nlark.com|https://registry.npmjs.org|g' yarn.lock
-          sed -i 's|https://registry.yarnpkg.com|https://registry.npmjs.org|g' yarn.lock
-          
-          # 尝试修复包含查询参数的URL，使用更保守的替换方式
-          sed -i 's|?cache=.*"|"|g' yarn.lock
-          # 修复下载路径
-          sed -i 's|/download/|/|g' yarn.lock
-          # 修复@babel/runtime等包的错误URL格式
-          sed -i 's|/@babel/runtime/@babel/runtime-|/@babel/runtime-|g' yarn.lock
-          sed -i 's|/@babel/runtime/-/@babel/runtime-|/@babel/runtime-|g' yarn.lock
-          sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
-          sed -i 's|/@babel/\([^/]*\)/-/@babel/\1-|/@babel/\1-|g' yarn.lock
-          # 修复@ctrl/tinycolor等包的错误URL格式
-          sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
-          # 修复@ant-design/icons等包的错误URL格式
-          sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
-          sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1/-/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
-          # 添加缺失的包路径分隔符
-          sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
-          # 修复其他可能的包URL格式问题
-          sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
-          # 修复三层嵌套的URL格式问题
-          sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2/-/@\1/\2-|/@\1/\2-|g' yarn.lock
-          # 修复普通包名重复的URL格式问题（如classnames/classnames-2.3.1.tgz）
-          sed -i 's|/\([^/@]*\)/\1-|/\1-|g' yarn.lock
-          
-          # 添加Babel相关依赖到兼容版本
-          yarn add @babel/core@^7.16.0 @babel/preset-env@^7.16.0 @babel/preset-react@^7.16.0 babel-loader@^8.2.3 --dev --registry https://registry.npmjs.org/
-          
-          # 如果yarn.lock文件仍有问题，尝试完全重新生成
-          if ! yarn check --integrity &>/dev/null; then
-            echo "yarn.lock文件可能已损坏，尝试重新生成"
-            rm yarn.lock
-            # 尝试使用yarn安装
-            if ! NODE_TLS_REJECT_UNAUTHORIZED=0 yarn install --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit; then
-              echo "yarn安装失败，尝试使用npm作为备选方案"
-              # 删除node_modules确保干净安装
-              rm -rf node_modules
-              # 使用npm安装
-              npm config set registry https://registry.npmjs.org/
-              NODE_TLS_REJECT_UNAUTHORIZED=0 npm install --no-audit
-            fi
-          else
-            # 如果yarn.lock文件正常，直接使用
-            if ! NODE_TLS_REJECT_UNAUTHORIZED=0 yarn --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit; then
-              echo "yarn安装失败，尝试使用npm作为备选方案"
-              # 删除node_modules确保干净安装
-              rm -rf node_modules
-              # 使用npm安装
-              npm config set registry https://registry.npmjs.org/
-              NODE_TLS_REJECT_UNAUTHORIZED=0 npm install --no-audit
-            fi
-          fi
-          
-          # 更新react-scripts到兼容版本
-          yarn add react-scripts@4.0.3 --dev --registry https://registry.npmjs.org/
-          
-          # 添加NODE_OPTIONS环境变量以解决Node.js v18与webpack不兼容的问题
-          export NODE_OPTIONS="--openssl-legacy-provider"
-          NODE_TLS_REJECT_UNAUTHORIZED=0 yarn build --registry https://registry.npmjs.org/
-      - name: Install dependencies
         run: |
+          cd front-end
+          # 确保使用官方 npm 源
           yarn config set registry https://registry.npmjs.org/
-          # 清除yarn缓存，确保不使用淘宝镜像
           yarn cache clean
-          # 备份原始yarn.lock文件
-          cp yarn.lock yarn.lock.backup
           
-          # 使用更安全的替换方式 - 只替换域名部分
-          sed -i 's|https://registry.npm.taobao.org|https://registry.npmjs.org|g' yarn.lock
-          sed -i 's|https://registry.nlark.com|https://registry.npmjs.org|g' yarn.lock
-          sed -i 's|https://registry.yarnpkg.com|https://registry.npmjs.org|g' yarn.lock
-          
-          # 修复下载路径和查询参数
-          sed -i 's|/download/|/|g' yarn.lock
-          sed -i 's|?cache=.*"|"|g' yarn.lock
-          # 修复@babel/runtime等包的错误URL格式
-          sed -i 's|/@babel/runtime/@babel/runtime-|/@babel/runtime-|g' yarn.lock
-          sed -i 's|/@babel/runtime/-/@babel/runtime-|/@babel/runtime-|g' yarn.lock
-          sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
-          sed -i 's|/@babel/\([^/]*\)/-/@babel/\1-|/@babel/\1-|g' yarn.lock
-          # 修复@ctrl/tinycolor等包的错误URL格式
-          sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
-          # 修复@ant-design/icons等包的错误URL格式
-          sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
-          sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1/-/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
-          # 添加缺失的包路径分隔符
-          sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
-          # 修复其他可能的包URL格式问题
-          sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
-          # 修复三层嵌套的URL格式问题
-          sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2/-/@\1/\2-|/@\1/\2-|g' yarn.lock
-          # 修复普通包名重复的URL格式问题（如classnames/classnames-2.3.1.tgz）
-          sed -i 's|/\([^/@]*\)/\1-|/\1-|g' yarn.lock
-          # 如果yarn.lock文件仍有问题，尝试使用备份恢复并重新生成
-          if ! yarn check --integrity &>/dev/null; then
-            echo "yarn.lock文件可能已损坏，尝试恢复备份并重新生成"
-            cp yarn.lock.backup yarn.lock
-            # 只替换域名，不修改其他格式
+          # 修复 yarn.lock 文件中的 URL 问题
+          if [ -f "yarn.lock" ]; then
+            # 备份原始 yarn.lock 文件
+            cp yarn.lock yarn.lock.backup
+            
+            # 替换所有镜像源为官方源
             sed -i 's|https://registry.npm.taobao.org|https://registry.npmjs.org|g' yarn.lock
             sed -i 's|https://registry.nlark.com|https://registry.npmjs.org|g' yarn.lock
             sed -i 's|https://registry.yarnpkg.com|https://registry.npmjs.org|g' yarn.lock
-            # 修复@babel/runtime等包的错误URL格式
+            sed -i 's|https://registry.npmmirror.com|https://registry.npmjs.org|g' yarn.lock
+            
+            # 修复 URL 格式问题
+            sed -i 's|/download/|/|g' yarn.lock
+            sed -i 's|?cache=.*"|"\1|g' yarn.lock
             sed -i 's|/@babel/runtime/@babel/runtime-|/@babel/runtime-|g' yarn.lock
             sed -i 's|/@babel/runtime/-/@babel/runtime-|/@babel/runtime-|g' yarn.lock
             sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
             sed -i 's|/@babel/\([^/]*\)/-/@babel/\1-|/@babel/\1-|g' yarn.lock
-            # 修复@ctrl/tinycolor等包的错误URL格式
             sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
-            # 修复其他可能的包URL格式问题
+            sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
+            sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1/-/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
+            sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
             sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
-            # 修复普通包名重复的URL格式问题（如classnames/classnames-2.3.1.tgz）
+            sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2/-/@\1/\2-|/@\1/\2-|g' yarn.lock
             sed -i 's|/\([^/@]*\)/\1-|/\1-|g' yarn.lock
+            
+            # 修复查询参数和缓存标记
+            sed -i 's|\?cache=[^"]*||g' yarn.lock
+            sed -i 's|\?file=[^"]*||g' yarn.lock
+            
+            # 修复特殊包名格式问题
+            sed -i 's|/@\([^/]*\)/\([^/]*\)/-/|/@\1/\2/|g' yarn.lock
+            sed -i 's|/\([^@/][^/]*\)/-/|/\1/|g' yarn.lock
+            
+            # 修复协议问题
+            sed -i 's|http://registry.npmjs.org|https://registry.npmjs.org|g' yarn.lock
+            sed -i 's|//registry.npmjs.org|https://registry.npmjs.org|g' yarn.lock
+            
+            # 修复其他常见的URL格式问题
+            sed -i 's|https://registry.npmjs.org/download/|https://registry.npmjs.org/|g' yarn.lock
+            sed -i 's|/-/|/|g' yarn.lock
+            sed -i 's|//registry.npmjs.org|https://registry.npmjs.org|g' yarn.lock
+            
+            # 修复重复路径问题
+            sed -i 's|\(@[^/]*/[^/]*\)/\1-|\1-|g' yarn.lock
+            sed -i 's|/\([^@/][^/]*\)/\1-|/\1-|g' yarn.lock
+            
+            # 修复其他常见的URL格式问题
+            sed -i 's|https://registry.npmjs.org/download/|https://registry.npmjs.org/|g' yarn.lock
+            sed -i 's|/-/|/|g' yarn.lock
+            sed -i 's|//registry.npmjs.org|https://registry.npmjs.org|g' yarn.lock
+            
+            # 修复重复路径问题
+            sed -i 's|\(@[^/]*/[^/]*\)/\1-|\1-|g' yarn.lock
+            sed -i 's|/\([^@/][^/]*\)/\1-|/\1-|g' yarn.lock
           fi
-          # 添加NODE_OPTIONS环境变量以解决Node.js v18与webpack不兼容的问题
-          export NODE_OPTIONS="--openssl-legacy-provider"
-          # 添加NODE_TLS_REJECT_UNAUTHORIZED=0以绕过证书验证问题
-          NODE_TLS_REJECT_UNAUTHORIZED=0 yarn install --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
           
+          # 添加 Node.js v18 与 webpack 兼容的环境变量
+          export NODE_OPTIONS="--openssl-legacy-provider"
+          
+          # 安装依赖并构建
+          yarn install --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
+          yarn build
+
+      - name: Install server dependencies
+        run: |
+          # 确保使用官方 npm 源
+          yarn config set registry https://registry.npmjs.org/
+          yarn cache clean
+          
+          # 修复 yarn.lock 文件中的 URL 问题
+          if [ -f "yarn.lock" ]; then
+            # 备份原始 yarn.lock 文件
+            cp yarn.lock yarn.lock.backup
+            
+            # 替换所有镜像源为官方源
+            sed -i 's|https://registry.npm.taobao.org|https://registry.npmjs.org|g' yarn.lock
+            sed -i 's|https://registry.nlark.com|https://registry.npmjs.org|g' yarn.lock
+            sed -i 's|https://registry.yarnpkg.com|https://registry.npmjs.org|g' yarn.lock
+            sed -i 's|https://registry.npmmirror.com|https://registry.npmjs.org|g' yarn.lock
+            
+            # 修复 URL 格式问题
+            sed -i 's|/download/|/|g' yarn.lock
+            sed -i 's|?cache=.*"|"\1|g' yarn.lock
+            sed -i 's|/@babel/runtime/@babel/runtime-|/@babel/runtime-|g' yarn.lock
+            sed -i 's|/@babel/runtime/-/@babel/runtime-|/@babel/runtime-|g' yarn.lock
+            sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
+            sed -i 's|/@babel/\([^/]*\)/-/@babel/\1-|/@babel/\1-|g' yarn.lock
+            sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
+            sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
+            sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1/-/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
+            sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
+            sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
+            sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2/-/@\1/\2-|/@\1/\2-|g' yarn.lock
+            sed -i 's|/\([^/@]*\)/\1-|/\1-|g' yarn.lock
+            
+            # 修复查询参数和缓存标记
+            sed -i 's|\?cache=[^"]*||g' yarn.lock
+            sed -i 's|\?file=[^"]*||g' yarn.lock
+            
+            # 修复特殊包名格式问题
+            sed -i 's|/@\([^/]*\)/\([^/]*\)/-/|/@\1/\2/|g' yarn.lock
+            sed -i 's|/\([^@/][^/]*\)/-/|/\1/|g' yarn.lock
+            
+            # 修复协议问题
+            sed -i 's|http://registry.npmjs.org|https://registry.npmjs.org|g' yarn.lock
+            sed -i 's|//registry.npmjs.org|https://registry.npmjs.org|g' yarn.lock
+            
+            # 修复其他常见的URL格式问题
+            sed -i 's|https://registry.npmjs.org/download/|https://registry.npmjs.org/|g' yarn.lock
+            sed -i 's|/-/|/|g' yarn.lock
+            sed -i 's|//registry.npmjs.org|https://registry.npmjs.org|g' yarn.lock
+            
+            # 修复重复路径问题
+            sed -i 's|\(@[^/]*/[^/]*\)/\1-|\1-|g' yarn.lock
+            sed -i 's|/\([^@/][^/]*\)/\1-|/\1-|g' yarn.lock
+            
+            # 修复其他常见的URL格式问题
+            sed -i 's|https://registry.npmjs.org/download/|https://registry.npmjs.org/|g' yarn.lock
+            sed -i 's|/-/|/|g' yarn.lock
+            sed -i 's|//registry.npmjs.org|https://registry.npmjs.org|g' yarn.lock
+            
+            # 修复重复路径问题
+            sed -i 's|\(@[^/]*/[^/]*\)/\1-|\1-|g' yarn.lock
+            sed -i 's|/\([^@/][^/]*\)/\1-|/\1-|g' yarn.lock
+          fi
+          
+          # 添加 Node.js v18 与 webpack 兼容的环境变量
+          export NODE_OPTIONS="--openssl-legacy-provider"
+          
+          # 安装依赖
+          yarn install --network-timeout 600000 --registry https://registry.npmjs.org/ --no-audit
+
       - name: Package
         shell: bash
         run: |
+          # 清理并创建打包目录
           rm -rf network-rc dist
-          mkdir network-rc
-          cp index.js network-rc
+          mkdir -p network-rc/front-end
+          
+          # 复制必要文件
+          cp index.js network-rc/
           cp package.json network-rc/
           cp -r lib network-rc/
           cp -r node_modules network-rc/
-          mkdir network-rc/front-end
           cp -r front-end/build network-rc/front-end/
+          
           # 添加安装脚本
           cp install_with_cloudflare.sh network-rc/
-          mkdir dist
+          
+          # 创建发布包
+          mkdir -p dist
           tar -zcvf dist/network-rc.tar.gz network-rc
           rm -rf network-rc
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -177,13 +194,14 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+
       - name: Upload Release Asset
-        id: upload-release-asset 
+        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/network-rc.tar.gz
           asset_name: network-rc.tar.gz
           asset_content_type: application/tar+gzip
