@@ -42,7 +42,7 @@ jobs:
             
             # 修复 URL 格式问题
             sed -i 's|/download/|/|g' yarn.lock
-            sed -i 's|?cache=.*"|"\1|g' yarn.lock
+            sed -i 's|?cache=.*"|""|g' yarn.lock
             sed -i 's|/@babel/runtime/@babel/runtime-|/@babel/runtime-|g' yarn.lock
             sed -i 's|/@babel/runtime/-/@babel/runtime-|/@babel/runtime-|g' yarn.lock
             sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
@@ -112,7 +112,7 @@ jobs:
             
             # 修复 URL 格式问题
             sed -i 's|/download/|/|g' yarn.lock
-            sed -i 's|?cache=.*"|"\1|g' yarn.lock
+            sed -i 's|?cache=.*"|""|g' yarn.lock
             sed -i 's|/@babel/runtime/@babel/runtime-|/@babel/runtime-|g' yarn.lock
             sed -i 's|/@babel/runtime/-/@babel/runtime-|/@babel/runtime-|g' yarn.lock
             sed -i 's|/@babel/\([^/]*\)/@babel/\1-|/@babel/\1-|g' yarn.lock
