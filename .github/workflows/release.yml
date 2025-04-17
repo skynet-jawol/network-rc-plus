@@ -50,10 +50,11 @@ jobs:
             sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
             sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
             sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1/-/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
-            sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
-            sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
-            sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2/-/@\1/\2-|/@\1/\2-|g' yarn.lock
-            sed -i 's|/\([^/@]*\)/\1-|/\1-|g' yarn.lock
+            # 注释掉可能导致语法错误的复杂替换
+            # sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
+            # sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
+            # sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2/-/@\1/\2-|/@\1/\2-|g' yarn.lock
+            # sed -i 's|/\([^/@]*\)/\1-|/\1-|g' yarn.lock
             
             # 修复查询参数和缓存标记
             sed -i 's|\?cache=[^"]*||g' yarn.lock
@@ -120,10 +121,11 @@ jobs:
             sed -i 's|/@ctrl/\([^/]*\)/@ctrl/\1-|/@ctrl/\1-|g' yarn.lock
             sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
             sed -i 's|/@ant-design/\([^/]*\)/@ant-design/\1/-/@ant-design/\1-|/@ant-design/\1-|g' yarn.lock
-            sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
-            sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
-            sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2/-/@\1/\2-|/@\1/\2-|g' yarn.lock
-            sed -i 's|/\([^/@]*\)/\1-|/\1-|g' yarn.lock
+            # 注释掉可能导致语法错误的复杂替换
+            # sed -i 's|\(@[^/]*/[^/]*\)-\([0-9]\)|\1/-/\1-\2|g' yarn.lock
+            # sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2-|/@\1/\2-|g' yarn.lock
+            # sed -i 's|/@\([^/]*\)/\([^/]*\)/@\1/\2/-/@\1/\2-|/@\1/\2-|g' yarn.lock
+            # sed -i 's|/\([^/@]*\)/\1-|/\1-|g' yarn.lock
             
             # 修复查询参数和缓存标记
             sed -i 's|\?cache=[^"]*||g' yarn.lock
